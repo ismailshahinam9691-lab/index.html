@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Setup | RoozGar</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .onboarding-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: var(--accent-indigo);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-family: inherit;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-indigo);
+            box-shadow: 0 0 0 3px rgba(30, 27, 75, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">RoozGar</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="onboarding-container">
+        <div class="card glass animate-fade">
+            <h1 id="onboardingTitle" style="text-align: center; margin-bottom: 1rem;">Setup Your Profile</h1>
+
+            <div id="stepIndicator" class="step-indicator">
+                <div class="step active" id="step1Circle">1</div>
+                <div class="step" id="step2Circle">2</div>
+            </div>
+
+            <form id="onboardingForm">
+                <!-- Step 1: Basic Details -->
+                <div id="step1" class="form-section active">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--accent-indigo);">Basic Information</h3>
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="fullName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea id="address" placeholder="Sector, Street, Area in Islamabad" required></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select id="gender" required>
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Age</label>
+                            <input type="number" id="age" min="18" placeholder="Years" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>CNIC Number</label>
+                        <input type="text" id="nic" placeholder="XXXXX-XXXXXXX-X" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" style="width: 100%;" id="nextBtn">Continue</button>
+                </div>
+
+                <!-- Step 2: Occupation Details (Worker Only) -->
+                <div id="step2" class="form-section">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--accent-amber);">Occupational Details</h3>
+                    <div class="form-group">
+                        <label>Current Occupation</label>
+                        <select id="occupation" required disabled>
+                            <option value="">Select your skill</option>
+                            <option value="Electrician">Electrician</option>
+                            <option value="Plumber">Plumber</option>
+                            <option value="Home Cleaner">Home Cleaner</option>
+                            <option value="Carpenter">Carpenter</option>
+                            <option value="Painter">Painter</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Core Expertise</label>
+                        <textarea id="expertise" placeholder="Describe what you are best at..." required
+                            disabled></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Years of Experience</label>
+                        <input type="number" id="experience" min="0" placeholder="e.g. 5" required disabled>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn" style="flex: 1; border: 1px solid var(--border-color);"
+                            id="prevBtn">Back</button>
+                        <button type="submit" class="btn btn-secondary" style="flex: 1;">Complete Setup</button>
+                    </div>
+                </div>
+
+                <!-- Step 1 Submit for Household -->
+                <div id="householdSubmit" style="display: none; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Household Profile</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const role = urlParams.get('role') || 'household';
+
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const stepIndicator = document.getElementById('stepIndicator');
+        const step2Circle = document.getElementById('step2Circle');
+        const householdSubmit = document.getElementById('householdSubmit');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const onboardingForm = document.getElementById('onboardingForm');
+
+        // Adjust visibility based on role
+        if (role === 'household') {
+            stepIndicator.style.display = 'none';
+            nextBtn.style.display = 'none';
+            householdSubmit.style.display = 'block';
+        }
+
+        nextBtn.addEventListener('click', () => {
+            // Basic validation for Step 1
+            const inputs = step1.querySelectorAll('input, select, textarea');
+            let valid = true;
+            inputs.forEach(i => { if (!i.checkValidity()) { i.reportValidity(); valid = false; } });
+
+            if (valid) {
+                step1.classList.remove('active');
+                step2.classList.add('active');
+                step2Circle.classList.add('active');
+
+                // Enable Step 2 inputs
+                step2.querySelectorAll('input, select, textarea').forEach(i => i.disabled = false);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            step2.classList.remove('active');
+            step1.classList.add('active');
+            step2Circle.classList.remove('active');
+        });
+
+        onboardingForm.onsubmit = function (e) {
+            e.preventDefault();
+
+            const profile = {
+                role: role,
+                name: document.getElementById('fullName').value,
+                address: document.getElementById('address').value,
+                gender: document.getElementById('gender').value,
+                age: document.getElementById('age').value,
+                nic: document.getElementById('nic').value
+            };
+
+            if (role === 'worker') {
+                profile.occupation = document.getElementById('occupation').value;
+                profile.expertise = document.getElementById('expertise').value;
+                profile.experience = document.getElementById('experience').value;
+            }
+
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+
+            alert(`Welcome, ${profile.name}! Your ${role} profile has been created.`);
+            window.location.href = role === 'worker' ? 'worker.html' : 'household.html';
+        };
+    </script>
+</body>
+
+</html>

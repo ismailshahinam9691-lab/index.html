@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Household Dashboard | RoozGar</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .filter-bar {
+            background: var(--bg-secondary);
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .worker-stats {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .rating {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .location {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">RoozGar</a>
+                <ul class="nav-links">
+                    <li><a href="household.html">Find Workers</a></li>
+                    <li><a href="#myHiresSection" onclick="loadMyHires()">My Hires</a></li>
+                    <li><a href="#" onclick="openComplaintModal()">File a Complaint</a></li>
+                    <li><a href="index.html" onclick="localStorage.removeItem('userProfile')">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="filter-bar">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 1.25rem;">Available Workers in Islamabad</h2>
+            <div class="worker-stats">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('postJobModal').style.display='flex'">+ Post a Job</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Post Job Modal -->
+    <div id="postJobModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card glass animate-fade" style="width: 100%; max-width: 500px; position: relative;">
+            <button onclick="this.parentElement.parentElement.style.display='none'"
+                style="position: absolute; top: 1rem; right: 1rem; background: none; font-size: 1.5rem; color: var(--text-secondary);">&times;</button>
+            <h2 style="margin-bottom: 1.5rem;">Post a New Job</h2>
+            <form id="postJobForm">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Problem Description</label>
+                    <textarea id="jobDesc"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; height: 100px;"
+                        placeholder="e.g. My kitchen sink is leaking and causing a mess..." required></textarea>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Select Sector</label>
+                    <select id="jobSector"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem;"
+                        required>
+                        <option value="F-10">F-10</option>
+                        <option value="F-11">F-11</option>
+                        <option value="G-11">G-11</option>
+                        <option value="E-7">E-7</option>
+                        <option value="DHA Phase 2">DHA Phase 2</option>
+                        <option value="Blue Area">Blue Area</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Upload Photo of
+                        Problem</label>
+                    <input type="file" id="jobImage" accept="image/*" style="width: 100%;"
+                        onchange="previewImage(event)">
+                    <div id="imagePreview" style="margin-top: 1rem; display: none;">
+                        <img id="previewImg" src=""
+                            style="width: 100%; border-radius: 0.5rem; max-height: 200px; object-fit: cover;">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Post to Worker Pool</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Splash Notification Overlay -->
+    <div id="splashOverlay" class="splash-overlay">
+        <div class="splash-content">
+            <span id="splashIcon" class="splash-icon">⭐</span>
+            <div class="splash-logo">RoozGar</div>
+            <h1 id="splashTitle" class="splash-title">Success!</h1>
+            <p id="splashMessage" class="splash-message">Your action was completed successfully.</p>
+        </div>
+    </div>
+
+    <script>
+        function showSplash(title, message, icon = '⭐', duration = 2500) {
+            const overlay = document.getElementById('splashOverlay');
+            document.getElementById('splashTitle').textContent = title;
+            document.getElementById('splashMessage').textContent = message;
+            document.getElementById('splashIcon').textContent = icon;
+
+            overlay.classList.remove('fade-out');
+            overlay.classList.add('active');
+
+            setTimeout(() => {
+                overlay.classList.add('fade-out');
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                }, 800);
+            }, duration);
+        }
+
+        function previewImage(event) {
+            const preview = document.getElementById('imagePreview');
+            const img = document.getElementById('previewImg');
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.getElementById('postJobForm').onsubmit = function (e) {
+            e.preventDefault();
+            const desc = document.getElementById('jobDesc').value;
+            const sector = document.getElementById('jobSector').value;
+            const img = document.getElementById('previewImg').src;
+
+            const newJob = {
+                id: Date.now(),
+                desc,
+                sector,
+                img,
+                time: 'Just now',
+                status: 'Open',
+                price: 'Rs. Negotiable'
+            };
+
+            let jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
+            jobs.unshift(newJob);
+            localStorage.setItem('jobs', JSON.stringify(jobs));
+
+            showSplash("JOB LIVE", "Workers will see your request shortly!", "🚀");
+            setTimeout(() => {
+                document.getElementById('postJobModal').style.display = 'none';
+                window.location.reload();
+            }, 2000);
+        };
+    </script>
+
+    <main class="container">
+        <div class="grid animate-fade">
+            <!-- Worker Card 1 -->
+            <div class="card">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">Ali Khan</h3>
+                        <span
+                            style="display: inline-block; padding: 0.2rem 0.6rem; background: #dcfce7; color: #166534; border-radius: 99px; font-size: 0.75rem; font-weight: 600;">Electrician</span>
+                    </div>
+                    <span class="rating">⭐ 4.8</span>
+                </div>
+                <div class="location" style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                    <span>📍 Islamabad, F-10 Markaz</span>
+                </div>
+                <div id="contact-1" class="contact-options">
+                    <div class="contact-grid">
+                        <a href="tel:+923001234567" class="btn-contact">Call Electrician</a>
+                        <button class="btn btn-contact btn-msg"
+                            onclick="showToast('Messaging', 'Opening chat with Ali Khan...', 'success')">Message</button>
+                    </div>
+                    <button class="btn"
+                        style="width: 100%; border: 1px solid var(--border-color); background: transparent; font-size: 0.85rem;"
+                        onclick="this.parentElement.style.display='none'">Close</button>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;"
+                    onclick="hireWorker(1, 'Ali Khan', 'Electrician')">Hire
+                    Now</button>
+            </div>
+
+            <!-- Worker Card 2 -->
+            <div class="card">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">Sarah Ahmed</h3>
+                        <span
+                            style="display: inline-block; padding: 0.2rem 0.6rem; background: #e0f2fe; color: #075985; border-radius: 99px; font-size: 0.75rem; font-weight: 600;">Home
+                            Cleaner</span>
+                    </div>
+                    <span class="rating">⭐ 4.9</span>
+                </div>
+                <div class="location" style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                    <span>📍 Islamabad, DHA Phase 2</span>
+                </div>
+                <div id="contact-2" class="contact-options">
+                    <div class="contact-grid">
+                        <a href="tel:+923007654321" class="btn-contact">Call Cleaner</a>
+                        <button class="btn btn-contact btn-msg"
+                            onclick="showToast('Messaging', 'Opening chat with Sarah Ahmed...', 'success')">Message</button>
+                    </div>
+                    <button class="btn"
+                        style="width: 100%; border: 1px solid var(--border-color); background: transparent; font-size: 0.85rem;"
+                        onclick="this.parentElement.style.display='none'">Close</button>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;"
+                    onclick="hireWorker(2, 'Sarah Ahmed', 'Home Cleaner')">Hire
+                    Now</button>
+            </div>
+
+            <!-- Worker Card 3 -->
+            <div class="card">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">Kamran Malik</h3>
+                        <span
+                            style="display: inline-block; padding: 0.2rem 0.6rem; background: #fef3c7; color: #92400e; border-radius: 99px; font-size: 0.75rem; font-weight: 600;">Plumber</span>
+                    </div>
+                    <span class="rating">⭐ 4.5</span>
+                </div>
+                <div class="location" style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                    <span>📍 Islamabad, G-11</span>
+                </div>
+                <div id="contact-3" class="contact-options">
+                    <div class="contact-grid">
+                        <a href="tel:+923001122334" class="btn-contact">Call Plumber</a>
+                        <button class="btn btn-contact btn-msg"
+                            onclick="showToast('Messaging', 'Opening chat with Kamran Malik...', 'success')">Message</button>
+                    </div>
+                    <button class="btn"
+                        style="width: 100%; border: 1px solid var(--border-color); background: transparent; font-size: 0.85rem;"
+                        onclick="this.parentElement.style.display='none'">Close</button>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;"
+                    onclick="hireWorker(3, 'Kamran Malik', 'Plumber')">Hire
+                    Now</button>
+            </div>
+
+            <!-- Worker Card 4 -->
+            <div class="card">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">Zahid Shah</h3>
+                        <span
+                            style="display: inline-block; padding: 0.2rem 0.6rem; background: #ffedd5; color: #9a3412; border-radius: 99px; font-size: 0.75rem; font-weight: 600;">Carpenter</span>
+                    </div>
+                    <span class="rating">⭐ 4.7</span>
+                </div>
+                <div class="location" style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                    <span>📍 Islamabad, Blue Area</span>
+                </div>
+                <div id="contact-4" class="contact-options">
+                    <div class="contact-grid">
+                        <a href="tel:+923005566778" class="btn-contact">Call Carpenter</a>
+                        <button class="btn btn-contact btn-msg"
+                            onclick="showToast('Messaging', 'Opening chat with Zahid Shah...', 'success')">Message</button>
+                    </div>
+                    <button class="btn"
+                        style="width: 100%; border: 1px solid var(--border-color); background: transparent; font-size: 0.85rem;"
+                        onclick="this.parentElement.style.display='none'">Close</button>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;"
+                    onclick="hireWorker(4, 'Zahid Shah', 'Carpenter')">Hire
+                    Now</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 RoozGar. All rights reserved.</p>
+        </div>
+    </footer>
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        // Personalization
+        const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+        if (userProfile.name) {
+            const h2 = document.querySelector('.filter-bar h2');
+            if (h2) h2.innerHTML = `Welcome, ${userProfile.name} | Islamabad`;
+        }
+
+        function hireWorker(id, name, skill) {
+            let myHires = JSON.parse(localStorage.getItem('myHires') || '[]');
+
+            // Check if already hired to avoid duplicates
+            if (!myHires.find(h => h.name === name)) {
+                myHires.push({ id, name, skill, hiredAt: new Date().toLocaleString() });
+                localStorage.setItem('myHires', JSON.stringify(myHires));
+            }
+
+            // Redirect to contact page
+            window.location.href = `contact-worker.html?id=${id}&name=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`;
+        }
+
+        function loadMyHires() {
+            const myHires = JSON.parse(localStorage.getItem('myHires') || '[]');
+            const mainContainer = document.querySelector('main.container');
+
+            // Remove existing My Hires section if any
+            const existingSection = document.getElementById('myHiresSection');
+            if (existingSection) existingSection.remove();
+
+            const section = document.createElement('section');
+            section.id = 'myHiresSection';
+            section.className = 'animate-fade';
+            section.style.marginTop = '4rem';
+            section.style.paddingTop = '2rem';
+            section.style.borderTop = '2px dashed var(--border-color)';
+
+            section.innerHTML = `<h2 id="my-hires" style="margin-bottom: 2rem; font-size: 1.5rem;">My Hired Workers</h2>`;
+
+            if (myHires.length === 0) {
+                section.innerHTML += `
+                    <div class="card" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                        <p>You haven't hired any workers yet.</p>
+                    </div>
+                `;
+            } else {
+                const grid = document.createElement('div');
+                grid.className = 'grid';
+                myHires.forEach(worker => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="font-size: 1.15rem;">${worker.name}</h3>
+                                <p style="color: var(--accent-blue); font-size: 0.9rem; font-weight: 600;">${worker.skill}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="font-size: 0.75rem; color: var(--text-secondary);">Hired on</p>
+                                <p style="font-size: 0.8rem; font-weight: 500;">${worker.hiredAt.split(',')[0]}</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+                            <a href="contact-worker.html?name=${encodeURIComponent(worker.name)}&skill=${encodeURIComponent(worker.skill)}" class="btn btn-primary" style="flex: 1; text-align: center; font-size: 0.85rem; padding: 0.5rem;">Contact Again</a>
+                            <button class="btn btn-secondary" style="flex: 1; font-size: 0.85rem; padding: 0.5rem;" onclick="removeHire('${worker.name}')">Dismiss</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+                section.appendChild(grid);
+            }
+            mainContainer.appendChild(section);
+        }
+
+        function removeHire(name) {
+            if (confirm('Are you sure you want to remove this worker from your hires?')) {
+                let myHires = JSON.parse(localStorage.getItem('myHires') || '[]');
+                myHires = myHires.filter(h => h.name !== name);
+                localStorage.setItem('myHires', JSON.stringify(myHires));
+                loadMyHires();
+            }
+        }
+
+        // Initialize
+        loadMyHires();
+
+        function openComplaintModal() {
+            document.getElementById('complaintModal').style.display = 'flex';
+        }
+
+        function closeComplaintModal() {
+            document.getElementById('complaintModal').style.display = 'none';
+        }
+
+        document.getElementById('complaintForm').onsubmit = function (e) {
+            e.preventDefault();
+            closeComplaintModal();
+            showToast('Complaint Filed', 'Our team will review your complaint shortly.', 'success');
+        }
+
+        function showToast(title, message, type = '') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div style="font-weight: 700;">${title}</div>
+                <div style="font-size: 0.9rem;">${message}</div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { if (toast.parentElement) toast.style.animation = 'fadeOut 0.5s ease forwards'; }, 3000);
+            setTimeout(() => { if (toast.parentElement) toast.remove(); }, 3500);
+        }
+    </script>
+
+    <!-- Complaint Modal -->
+    <div id="complaintModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeComplaintModal()">&times;</span>
+            <h2 style="margin-bottom: 1.5rem;">File a Complaint</h2>
+            <form id="complaintForm">
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" placeholder="e.g. Service Issue" required>
+                </div>
+                <div class="form-group">
+                    <label>Details</label>
+                    <textarea rows="4" placeholder="Describe your issue..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Complaint</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

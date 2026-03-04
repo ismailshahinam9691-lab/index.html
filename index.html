@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoozGar | Connect with Local Help</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">
+                    RoozGar
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li id="complaintLink" style="display: none;"><a href="#" onclick="openComplaintModal()">File a
+                            Complaint</a></li>
+                    <li><a href="auth.html" id="loginLink">Login</a></li>
+                    <li><a href="auth.html" class="btn btn-primary" id="signupBtn" style="padding: 0.5rem 1rem;">Sign
+                            Up</a></li>
+                    <li id="logoutLink" style="display: none;"><a href="#" onclick="logout()">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" style="background: var(--header-bg); color: var(--header-text);">
+            <div class="container animate-fade">
+                <h1 style="color: white; margin-bottom: 2rem;">RoozGar: Your Reliable Partner in Service</h1>
+                <p style="color: #cbd5e1; font-size: 1.5rem; max-width: 800px; margin: 0 auto 3rem;">We are aiming to
+                    create a reliable and sustainable employment ecosystem for skilled workers while providing
+                    households with trusted local help.</p>
+                <div class="hero-btns">
+                    <a href="onboarding.html?role=household" class="btn btn-secondary">Find a Worker</a>
+                    <a href="onboarding.html?role=worker" class="btn btn-primary"
+                        style="background: white; color: var(--header-bg);">Join as a Worker</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="container" style="padding: 6rem 0;">
+            <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                <div class="animate-fade" style="margin-bottom: 4rem;">
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem;">Our Mission</h2>
+                    <p style="font-size: 1.2rem; color: var(--text-secondary); line-height: 1.8;">To bridge the gap
+                        between skilled daily-wage workers and households through a transparent, secure, and efficient
+                        digital platform that empowers the local workforce and simplifies home maintenance.</p>
+                </div>
+
+                <div class="animate-fade" style="border-top: 1px solid var(--border-color); padding-top: 4rem;">
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem;">Our Vision</h2>
+                    <p style="font-size: 1.2rem; color: var(--text-secondary); line-height: 1.8;">We envision a future
+                        where every skilled individual has equal access to fair work opportunities, contributing to a
+                        sustainable and resilient local economy in Pakistan.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 RoozGar. All rights reserved.</p>
+        </div>
+    </footer>
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        function showSplash(title, message, icon = '⭐', duration = 3000) {
+            const overlay = document.getElementById('splashOverlay');
+            document.getElementById('splashTitle').textContent = title;
+            document.getElementById('splashMessage').textContent = message;
+            document.getElementById('splashIcon').textContent = icon;
+
+            overlay.classList.remove('fade-out');
+            overlay.classList.add('active');
+
+            setTimeout(() => {
+                overlay.classList.add('fade-out');
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                }, 800);
+            }, duration);
+        }
+
+        function checkLoginStatus() {
+            const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            const loginLink = document.getElementById('loginLink');
+            const signupBtn = document.getElementById('signupBtn');
+            const logoutLink = document.getElementById('logoutLink');
+            const complaintLink = document.getElementById('complaintLink');
+
+            if (userProfile.name) {
+                if (loginLink) loginLink.style.display = 'none';
+                if (signupBtn) signupBtn.style.display = 'none';
+                if (logoutLink) logoutLink.style.display = 'block';
+                if (complaintLink) complaintLink.style.display = 'block';
+
+                if (localStorage.getItem('justLoggedIn') === 'true') {
+                    showSplash("WELCOME BACK", `Hello ${userProfile.name.split(' ')[0]}, you're ready to go!`, "🏠");
+                    localStorage.removeItem('justLoggedIn');
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('userProfile');
+            window.location.reload();
+        }
+
+        function openComplaintModal() {
+            document.getElementById('complaintModal').style.display = 'flex';
+        }
+
+        function closeComplaintModal() {
+            document.getElementById('complaintModal').style.display = 'none';
+        }
+
+        document.getElementById('complaintForm').onsubmit = function (e) {
+            e.preventDefault();
+            closeComplaintModal();
+            showToast('Complaint Filed', 'Our team will review your complaint shortly.', 'success');
+        };
+
+        function showToast(title, message, type = '') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div style="font-weight: 700;">${title}</div>
+                <div style="font-size: 0.9rem;">${message}</div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { if (toast.parentElement) toast.style.animation = 'fadeOut 0.5s ease forwards'; }, 3000);
+            setTimeout(() => { if (toast.parentElement) toast.remove(); }, 3500);
+        }
+
+        checkLoginStatus();
+    </script>
+
+    <!-- Complaint Modal -->
+    <div id="complaintModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeComplaintModal()">&times;</span>
+            <h2 style="margin-bottom: 1.5rem;">File a Complaint</h2>
+            <form id="complaintForm">
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" placeholder="e.g. Delayed Service" required>
+                </div>
+                <div class="form-group">
+                    <label>Details</label>
+                    <textarea rows="4" placeholder="Describe your issue..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Complaint</button>
+            </form>
+        </div>
+    </div>
+    <!-- Splash Notification Overlay -->
+    <div id="splashOverlay" class="splash-overlay">
+        <div class="splash-content">
+            <span id="splashIcon" class="splash-icon">⭐</span>
+            <div class="splash-logo">RoozGar</div>
+            <h1 id="splashTitle" class="splash-title">Success!</h1>
+            <p id="splashMessage" class="splash-message">Your action was completed successfully.</p>
+        </div>
+    </div>
+</body>
+
+</html>

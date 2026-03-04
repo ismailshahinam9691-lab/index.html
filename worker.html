@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Dashboard | RoozGar</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-header {
+            background: var(--bg-secondary);
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-available {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .job-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">RoozGar</a>
+                <ul class="nav-links">
+                    <li><a href="worker.html">My Dashboard</a></li>
+                    <li><a href="#" onclick="loadEarnings()">Earnings</a></li>
+                    <li><a href="#" onclick="openComplaintModal()">File a Complaint</a></li>
+                    <li><a href="index.html" onclick="localStorage.removeItem('userProfile')">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="profile-header">
+        <div class="container profile-grid animate-fade">
+            <div class="card" style="text-align: center;">
+                <div style="width: 100px; height: 100px; background: #e2e8f0; border-radius: 50%; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--text-secondary);"
+                    id="initialsCircle">
+                    AK</div>
+                <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;" id="workerName">Ali Khan</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;" id="workerSkill">Electrician</p>
+                <span class="status-badge status-available">Available Now</span>
+            </div>
+            <div style="display: flex; flex-direction: column; justify-content: center;">
+                <h1 style="font-size: 2rem; margin-bottom: 1rem;" id="welcomeMsg">Welcome back, Ali!</h1>
+                <div style="display: flex; gap: 2rem;">
+                    <div>
+                        <p
+                            style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            Experience</p>
+                        <p style="font-weight: 600; font-size: 1.1rem;" id="workerExp">3 Years</p>
+                    </div>
+                    <div>
+                        <p
+                            style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            Rating</p>
+                        <p style="font-weight: 600; font-size: 1.1rem;">⭐ 4.8 (24 Reviews)</p>
+                    </div>
+                    <div>
+                        <p
+                            style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            Location</p>
+                        <p style="font-weight: 600; font-size: 1.1rem;">Islamabad</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
+        <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">New Job Requests</h2>
+        <div id="jobPool" class="grid animate-fade">
+            <!-- Dynamic jobs will be injected here -->
+        </div>
+
+        <section class="earnings-section">
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">My Earnings Portfolio</h2>
+            <div class="earnings-stats">
+                <div class="stat-card animate-fade">
+                    <span class="stat-label">Total Earned</span>
+                    <span class="stat-value" id="totalEarnings">Rs. 0</span>
+                </div>
+            </div>
+
+            <div id="earningsHistory">
+                <!-- Earnings history or empty state will be here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function showSplash(title, message, icon = '⭐', duration = 2500) {
+            const overlay = document.getElementById('splashOverlay');
+            document.getElementById('splashTitle').textContent = title;
+            document.getElementById('splashMessage').textContent = message;
+            document.getElementById('splashIcon').textContent = icon;
+
+            overlay.classList.remove('fade-out');
+            overlay.classList.add('active');
+
+            setTimeout(() => {
+                overlay.classList.add('fade-out');
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                }, 800);
+            }, duration);
+        }
+
+        const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+        if (userProfile.name) {
+            document.getElementById('workerName').textContent = userProfile.name;
+            document.getElementById('welcomeMsg').textContent = `Welcome back, ${userProfile.name.split(' ')[0]}!`;
+            document.getElementById('initialsCircle').textContent = userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+            if (userProfile.occupation) document.getElementById('workerSkill').textContent = userProfile.occupation;
+            if (userProfile.experience) document.getElementById('workerExp').textContent = `${userProfile.experience} Years`;
+        }
+
+
+        const jobPool = document.getElementById('jobPool');
+
+        function loadJobs() {
+            const jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
+
+            // If no jobs, add some defaults for demo
+            if (jobs.length === 0) {
+                const defaults = [
+                    { id: 101, desc: 'Kitchen Wiring Repair', sector: 'E-7', price: 'Rs. 1500', time: '10 mins ago', img: '' },
+                    { id: 102, desc: 'AC Installation', sector: 'Blue Area', price: 'Rs. 4000', time: '2 hours ago', img: '' }
+                ];
+                localStorage.setItem('jobs', JSON.stringify(defaults));
+                return loadJobs();
+            }
+
+            jobPool.innerHTML = '';
+            jobs.forEach(job => {
+                const card = document.createElement('div');
+                card.className = 'card glass';
+                card.id = `job-${job.id}`;
+
+                const jobImg = job.img ? `<img src="${job.img}" style="width: 100%; border-radius: 0.5rem; margin-bottom: 1rem; max-height: 150px; object-fit: cover;">` : '';
+
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <h3 style="font-size: 1.1rem;">${job.desc.substring(0, 30)}${job.desc.length > 30 ? '...' : ''}</h3>
+                        <span style="font-weight: 700; color: var(--accent-blue);">${job.price || 'Quotation'}</span>
+                    </div>
+                    ${jobImg}
+                    <p style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.5rem;">${job.desc}</p>
+                    <div class="job-meta">
+                        <span>📍 ${job.sector}, Islamabad</span>
+                        <span style="margin: 0 0.5rem;">•</span>
+                        <span>Posted ${job.time}</span>
+                    </div>
+                    <div class="job-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-secondary" style="flex: 1;" onclick="acceptJob(${job.id}, '${job.sector}')">Accept</button>
+                        <button class="btn" style="flex: 1; border: 1px solid var(--border-color); background: transparent;" onclick="declineJob(${job.id})">Decline</button>
+                    </div>
+                `;
+                jobPool.appendChild(card);
+            });
+        }
+
+        function acceptJob(id, sector) {
+            const card = document.getElementById(`job-${id}`);
+            const actions = card.querySelector('.job-actions');
+
+            // Update actions to show Accepted status and Contact options
+            actions.innerHTML = `
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button class="btn" style="width: 100%; background: #dcfce7; color: #166534; cursor: default; border: none;">✓ Job Accepted</button>
+                    <div class="contact-grid">
+                        <a href="tel:+923000000000" class="btn-contact">Call Household</a>
+                        <button class="btn btn-contact btn-msg" onclick="showToast('Messaging', 'Opening message thread with household...', 'success')">Message</button>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="completeJob(${id})">Mark as Completed</button>
+                </div>
+                <a href="https://www.google.com/maps/search/?api=1&query=Islamabad+${encodeURIComponent(sector)}" 
+                   target="_blank" 
+                   class="btn btn-primary" 
+                   style="height: fit-content; align-self: center;">Directions</a>
+            `;
+
+            showSplash("MISSION ACCEPTED", "Get ready to start work!", "🛠️");
+        }
+
+        function completeJob(id) {
+            const jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
+            const jobIndex = jobs.findIndex(j => j.id === id);
+
+            if (jobIndex !== -1) {
+                const completedJob = jobs[jobIndex];
+                const earnings = JSON.parse(localStorage.getItem('earnings') || '[]');
+
+                // Add to earnings
+                earnings.push({
+                    ...completedJob,
+                    completedAt: new Date().toLocaleString()
+                });
+
+                // Remove from active jobs
+                jobs.splice(jobIndex, 1);
+
+                localStorage.setItem('jobs', JSON.stringify(jobs));
+                localStorage.setItem('earnings', JSON.stringify(earnings));
+
+                showSplash("JOB COMPLETED", `You earned ${completedJob.price}!`, "💰");
+                loadJobs();
+                loadEarnings();
+            }
+        }
+
+        function loadEarnings() {
+            const earnings = JSON.parse(localStorage.getItem('earnings') || '[]');
+            const totalElement = document.getElementById('totalEarnings');
+            const historyElement = document.getElementById('earningsHistory');
+
+            let total = 0;
+            if (earnings.length === 0) {
+                totalElement.textContent = 'Rs. 0';
+                historyElement.innerHTML = `
+                    <div class="empty-earnings animate-fade">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
+                        <h3>You have zero earning</h3>
+                        <p>Complete your first job to see your earnings here!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            historyElement.innerHTML = '<div class="grid"></div>';
+            const grid = historyElement.querySelector('.grid');
+
+            earnings.forEach(job => {
+                const amount = parseInt(job.price.replace(/[^\d]/g, '')) || 0;
+                total += amount;
+
+                const card = document.createElement('div');
+                card.className = 'card animate-fade';
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="font-size: 1rem;">${job.desc}</h4>
+                        <span style="font-weight: 700; color: #10b981;">+ ${job.price}</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">📍 ${job.sector}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Completed on: ${job.completedAt}</p>
+                `;
+                grid.appendChild(card);
+            });
+
+            totalElement.textContent = `Rs. ${total}`;
+        }
+
+        function openComplaintModal() {
+            document.getElementById('complaintModal').style.display = 'flex';
+        }
+
+        function closeComplaintModal() {
+            document.getElementById('complaintModal').style.display = 'none';
+        }
+
+        document.getElementById('complaintForm').onsubmit = function (e) {
+            e.preventDefault();
+            closeComplaintModal();
+            showToast('Complaint Filed', 'Our team will review your complaint shortly.', 'success');
+        };
+
+        function showToast(title, message, type = '') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div style="font-weight: 700;">${title}</div>
+                <div style="font-size: 0.9rem;">${message}</div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { if (toast.parentElement) toast.style.animation = 'fadeOut 0.5s ease forwards'; }, 3000);
+            setTimeout(() => { if (toast.parentElement) toast.remove(); }, 3500);
+        }
+
+        function declineJob(id) {
+            if (confirm('Are you sure you want to decline this job?')) {
+                const card = document.getElementById(`job-${id}`);
+                card.style.opacity = '0.5';
+                card.style.pointerEvents = 'none';
+                setTimeout(() => card.remove(), 500);
+            }
+        }
+
+        loadJobs();
+        loadEarnings();
+    </script>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 RoozGar. All rights reserved.</p>
+        </div>
+    </footer>
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Complaint Modal -->
+    <div id="complaintModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeComplaintModal()">&times;</span>
+            <h2 style="margin-bottom: 1.5rem;">File a Complaint</h2>
+            <form id="complaintForm">
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" placeholder="e.g. Payment Issue" required>
+                </div>
+                <div class="form-group">
+                    <label>Details</label>
+                    <textarea rows="4" placeholder="Describe your issue..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Complaint</button>
+            </form>
+        </div>
+    </div>
+    <!-- Splash Notification Overlay -->
+    <div id="splashOverlay" class="splash-overlay">
+        <div class="splash-content">
+            <span id="splashIcon" class="splash-icon">⭐</span>
+            <div class="splash-logo">RoozGar</div>
+            <h1 id="splashTitle" class="splash-title">Success!</h1>
+            <p id="splashMessage" class="splash-message">Your action was completed successfully.</p>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Worker | RoozGar</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .contact-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            text-align: center;
+        }
+
+        .worker-profile-large {
+            width: 120px;
+            height: 120px;
+            background: var(--header-bg);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 2rem;
+            font-weight: 700;
+        }
+
+        .contact-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .action-card {
+            padding: 2.5rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .action-card i {
+            font-size: 2.5rem;
+        }
+
+        .action-card:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">RoozGar</a>
+                <ul class="nav-links">
+                    <li><a href="household.html">Back to Dashboard</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="contact-container animate-fade">
+            <div class="worker-profile-large" id="workerInitials">??</div>
+            <h1 id="workerName">Worker Name</h1>
+            <p id="workerSkill" style="color: var(--text-secondary); font-size: 1.25rem; margin-top: 0.5rem;">Skillset
+            </p>
+
+            <div class="contact-actions">
+                <a href="tel:+923000000000" class="card action-card">
+                    <span style="font-size: 3rem;">📞</span>
+                    <strong>Call Worker</strong>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Direct Voice Call</p>
+                </a>
+                <div class="card action-card" onclick="alert('Chat feature coming soon!')">
+                    <span style="font-size: 3rem;">💬</span>
+                    <strong>Live Chat</strong>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Message via RoozGar</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 4rem;">
+                <a href="household.html" class="btn btn-secondary">Go to My Hires</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const name = params.get('name') || 'Valued Worker';
+        const skill = params.get('skill') || 'Professional Service';
+
+        document.getElementById('workerName').textContent = name;
+        document.getElementById('workerSkill').textContent = skill;
+        document.getElementById('workerInitials').textContent = name.split(' ').map(n => n[0]).join('').toUpperCase();
+    </script>
+</body>
+
+</html>
